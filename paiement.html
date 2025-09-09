@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paiement - Blesslev</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo-container">
+    <img src="images/logo.png" alt="Logo Blesslev" class="logo">
+    <h1>Blesslev</h1>
+  </div>
+  <nav>
+    <ul>
+      <li><a href="index.html">Accueil</a></li>
+      <li><a href="catalogue.html">Catalogue</a></li>
+      <li><a href="panier.html">Panier</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <section class="paiement">
+    <h2>💳 Paiement sécurisé</h2>
+
+    <p id="total-a-payer"></p>
+
+    <form id="form-paiement">
+      <label>Numéro de carte :
+        <input type="text" name="carte" maxlength="16" required placeholder="1234 5678 9012 3456">
+      </label>
+      <label>Date d’expiration :
+        <input type="month" name="expiration" required>
+      </label>
+      <label>Code de sécurité (CVV) :
+        <input type="text" name="cvv" maxlength="3" required placeholder="123">
+      </label>
+
+      <button type="submit">Payer</button>
+    </form>
+  </section>
+</main>
+
+<script>
+  // Afficher le total sauvegardé depuis commander.html
+  const total = localStorage.getItem("totalCommande") || "Total : 0,00 €";
+  document.getElementById("total-a-payer").textContent = "Montant à régler : " + total;
+
+  // Simuler validation du paiement
+  document.getElementById("form-paiement").addEventListener("submit", (e) => {
+    e.preventDefault();
+    alert("✅ Paiement accepté ! Merci pour votre commande.");
+    localStorage.removeItem("panier"); // vider le panier
+    window.location.href = "index.html"; // retour à l’accueil
+  });
+</script>
+
+</body>
+</html>

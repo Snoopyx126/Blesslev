@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catalogue - Blesslev</title>
+  <link rel="stylesheet" href="style.css"> <!-- Assure-toi que le fichier existe -->
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-container">
+    <img src="images/Blesslev.png" alt="Logo Blesslev" class="logo">
+    <h1>Blesslev</h1>
+  </div>
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="catalogue.html">Catalogue</a>
+      <a href="panier.html">Panier</a>
+    </nav>
+  </header>
+
+  <!-- SECTION CATALOGUE -->
+ <main>
+  <main>
+  <section class="catalogue">
+    <h2>Nos Collections</h2>
+    <ul class="produits">
+      <li>
+        <img src="images/pessah.jpeg" alt="Haggadah de Pessah">
+        <h3>Haggadah de Pessah</h3>
+        <p><strong>Prix : 55 €</strong></p>
+        <button class="ajout-panier" data-id="p1" data-nom="Haggadah de Pessah" data-prix="55">Ajouter au panier</button>
+      </li>
+      <li>
+        <img src="images/calendrier.jpeg" alt="Calendrier personnalisable">
+        <h3>Calendrier personnalisable</h3>
+        <p><strong>Prix : 26 €</strong></p>
+        <button class="ajout-panier" data-id="p2" data-nom="Calendrier personnalisable" data-prix="26">Ajouter au panier</button>
+      </li>
+      <li>
+        <img src="images/chants de shabbat.jpeg" alt="Livre de prières">
+        <h3>Livre de prières</h3>
+        <p><strong>Prix : 126 €</strong></p>
+        <button class="ajout-panier" data-id="p3" data-nom="Livre de prières" data-prix="126">Ajouter au panier</button>
+      </li>
+      <li>
+        <img src="images/birkat hamazon.jpeg" alt="Birkat hamazon">
+        <h3>Birkat hamazon</h3>
+        <p><strong>Prix : 77 €</strong></p>
+        <button class="ajout-panier" data-id="p4" data-nom="Birkat hamazon" data-prix="77">Ajouter au panier</button>
+      </li>
+      <li>
+        <img src="images/femmes.jpeg" alt="Livre de prières femmes">
+        <h3>Livre de prières femmes</h3>
+        <p><strong>Prix : 126 €</strong></p>
+        <button class="ajout-panier" data-id="p5" data-nom="Livre de prières femmes" data-prix="126">Ajouter au panier</button>
+      </li>
+      <li>
+        <img src="images/esther.jpeg" alt="Meguila Esther">
+        <h3>Meguila Esther</h3>
+        <p><strong>Prix : 52 €</strong></p>
+        <button class="ajout-panier" data-id="p6" data-nom="Meguila Esther" data-prix="52">Ajouter au panier</button>
+      </li>
+      <li>
+        <img src="images/havdala.jpeg" alt="havdala">
+        <h3>havdala</h3>
+        <p><strong>Prix : 26 €</strong></p>
+        <button class="ajout-panier" data-id="p7" data-nom="havdala" data-prix="26">Ajouter au panier</button>
+      </li>
+      <li>
+        <img src="images/Birkar kala.jpeg" alt="Birkat kala">
+        <h3>Birkat kala</h3>
+        <p><strong>Prix : 30 €</strong></p>
+        <button class="ajout-panier" data-id="p8" data-nom="Birkat kala" data-prix="30">Ajouter au panier</button>
+      </li>
+    </ul>
+  </section>
+</main>
+
+
+ <footer>
+  <div class="footer-content">
+    <div>
+      <h3>Blesslev</h3>
+      <p>Votre boutique en ligne de confiance ✨</p>
+    </div>
+
+    <div>
+      <h4>Liens utiles</h4>
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="catalogue.html">Catalogue</a></li>
+        <li><a href="panier.html">Panier</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Contact</h4>
+      <p>Email : Levana@blesslev.fr</p>
+      <p>Téléphone : 06.09.61.92.71</p>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>© 2025 Ma Boutique - Tous droits réservés</p>
+  </div>
+</footer>
+
+
+  <script>
+  // Tableau pour stocker les produits du panier
+  let panier = [];
+
+  // Fonction pour ajouter au panier
+  function ajouterAuPanier(produit) {
+    panier.push(produit);
+    
+
+    // Mise à jour de l’affichage
+    let liste = document.getElementById("liste-panier");
+    liste.innerHTML = "";
+    panier.forEach(item => {
+      let li = document.createElement("li");
+      li.textContent = item;
+      liste.appendChild(li);
+    });
+  }
+</script>
+<script>
+  function ajouterAuPanier(nom, prix) {
+    // Récupère le panier existant ou crée un tableau vide
+    let panier = JSON.parse(localStorage.getItem("panier")) || [];
+
+    // Vérifie si le produit existe déjà
+    let produitExistant = panier.find(item => item.nom === nom);
+
+    if (produitExistant) {
+      produitExistant.quantite += 1;
+    } else {
+      panier.push({ nom: nom, prix: prix, quantite: 1 });
+    }
+
+    // Sauvegarde dans le localStorage
+    localStorage.setItem("panier", JSON.stringify(panier));
+
+    alert(nom + " ajouté au panier !");
+  }
+</script>
+<script>
+  // ————— Utils —————
+  const savePanier = (p) => localStorage.setItem("panier", JSON.stringify(p));
+  const loadPanier = () => JSON.parse(localStorage.getItem("panier")) || [];
+
+  function parseEuro(v) {
+    if (typeof v === "number") return v;
+    if (v == null) return NaN;
+    const s = String(v).replace(/\s/g, "").replace("€", "").replace(",", ".");
+    const n = Number(s);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  // Migration (corrige les vieux paniers qui stockaient "15 €" en chaîne)
+  (function migratePanier() {
+    let p = loadPanier();
+    let changed = false;
+    p = p.map(item => {
+      const prixNum = parseEuro(item.prix);
+      const qteNum  = Number(item.quantite) || 1;
+      if (typeof item.prix !== "number" || isNaN(item.prix) || item.prix !== prixNum || item.quantite !== qteNum) {
+        changed = true;
+      }
+      return { id: item.id, nom: item.nom, prix: prixNum, quantite: qteNum };
+    }).filter(it => Number.isFinite(it.prix));
+    if (changed) savePanier(p);
+  })();
+
+  // ————— Ajout au panier —————
+  document.querySelectorAll(".ajout-panier").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id   = btn.dataset.id;
+      const nom  = btn.dataset.nom;
+      const prix = parseEuro(btn.dataset.prix);
+
+      if (!Number.isFinite(prix)) {
+        alert("Prix invalide pour " + nom);
+        return;
+      }
+
+      let panier = loadPanier();
+      const exist = panier.find(p => p.id === id);
+      if (exist) {
+        exist.quantite += 1;
+      } else {
+        panier.push({ id, nom, prix, quantite: 1 });
+      }
+      savePanier(panier);
+      alert(nom + " ajouté au panier !");
+      
+    });
+  });
+</script>
+<script>
+(() => {
+  const KEY = "panier";
+
+  const load  = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
+  const save  = (p) => localStorage.setItem(KEY, JSON.stringify(p));
+  const euroN = (v) => Number(String(v).replace(/\s/g,"").replace("€","").replace(",","."));
+
+  function addToCart({id, nom, prix, img}) {
+    const price = euroN(prix);
+    if (!Number.isFinite(price)) { alert("Prix invalide pour " + nom); return; }
+
+    const cart = load();
+    const found = cart.find(i => i.id === id);
+
+    if (found) {
+      found.quantite = Number(found.quantite) || 0;
+      found.quantite += 1;
+      // met à jour prix/image si ancien enregistrement
+      if (!Number.isFinite(found.prix)) found.prix = price;
+      if (!found.img && img) found.img = img;
+    } else {
+      cart.push({ id, nom, prix: price, quantite: 1, img });
+    }
+
+    save(cart);
+  }
+
+  function bind() {
+    document.querySelectorAll(".ajout-panier").forEach(btn => {
+      // Au cas où le bouton est dans un <form>
+      btn.setAttribute("type", "button");
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault(); // évite une soumission de formulaire
+        const { id, nom, prix, img } = e.currentTarget.dataset;
+        addToCart({ id, nom, prix, img });
+
+        // petit feedback visuel
+        const old = e.currentTarget.textContent;
+        e.currentTarget.textContent = "Ajouté ✓";
+        setTimeout(() => e.currentTarget.textContent = old, 900);
+      }, { passive: false });
+    });
+  }
+
+  // S’assure que le DOM est prêt
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bind);
+  } else {
+    bind();
+  }
+})();
+</script>
+
+</body>
+</html>
