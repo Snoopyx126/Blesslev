@@ -7,12 +7,6 @@ const adminRouter = require("../routes/admin");
 
 const app = express();
 
-// Vercel (and most hosts) sit in front of this app as a reverse proxy, and
-// set the X-Forwarded-For header with the real visitor's IP. Without this,
-// express-rate-limit can't reliably tell users apart by IP (it would see
-// Vercel's internal address for everyone) and logs a warning about it.
-app.set("trust proxy", 1);
-
 // Customized calendar photos are sent as base64 in the order payload, which
 // can be a few MB — raise the default body size limit accordingly.
 app.use(express.json({ limit: "15mb" }));

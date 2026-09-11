@@ -14,31 +14,14 @@ function getClientPromise() {
     if (!process.env.MONGODB_URI) {
       throw new Error("MONGODB_URI manquant — configurez vos variables d'environnement (voir le README).");
     }
-    const client = new MongoClient(process.env.MONGODB_URI, {
-      // Forces IPv4 for the underlying socket connections. Vercel functions
-      // run on AWS Lambda, where IPv6 resolution to MongoDB Atlas shard
-      // hosts is sometimes broken and manifests as a confusing generic TLS
-      // handshake error ("tlsv1 alert internal error") rather than a clear
-      // network error — forcing IPv4 is the standard, well-documented fix.
-      family: 4,
-      serverSelectionTimeoutMS: 8000, // fail fast instead of hanging for ~30s
-      retryWrites: true,
-    });
+    const client = new MongoClient(process.env.MONGODB_URI);
     clientPromise = client.connect();
   }
   return clientPromise;
 }
 
 async function getDB() {
-  let client;
-  try {
-    client = await getClientPromise();
-  } catch (e) {
-    // Don't leave a broken connection attempt cached — let the next request
-    // try fresh instead of repeating the same failure forever.
-    clientPromise = null;
-    throw e;
-  }
+  const client = await getClientPromise();
   const db = client.db(process.env.MONGODB_DB_NAME || "blesslev");
 
   if (!indexesEnsured) {
