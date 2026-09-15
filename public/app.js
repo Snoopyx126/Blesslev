@@ -151,8 +151,8 @@ function renderHome() {
             <button class="country-pill ${state.country === "israel" ? "active" : ""}" onclick="setCountry('israel')">🇮🇱 Israël</button>
           </div>
         </div>
-        <button class="btn hero-cta" onclick="navigate({name:'customize', id:'calendrier-5787'})">🎨 Commencer à personnaliser votre calendrier</button>
-        <p class="hero-soon">✨ Plein de nouveautés arrivent très bientôt chez BLESSLEV — restez à l'écoute !</p>
+        <button class="btn hero-cta" onclick="navigate({name:'customize', id:'calendrier-5787'})">Commencer à personnaliser votre calendrier</button>
+        <p class="hero-soon">✦ Plein de nouveautés arrivent très bientôt chez BLESSLEV — restez à l'écoute ✦</p>
       </div>
     </div>`;
 }

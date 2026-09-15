@@ -119,7 +119,7 @@ img { max-width: 100%; display: block; }
   position: relative;
   background: linear-gradient(160deg, var(--pink-light) 0%, #fff 55%, var(--cream) 100%);
   border-radius: 24px;
-  padding: 44px 40px 34px;
+  padding: 56px 40px 48px;
   text-align: center;
   margin-bottom: 0;
   border: 1px solid var(--border);
@@ -127,8 +127,8 @@ img { max-width: 100%; display: block; }
 }
 .hero-motif {
   color: var(--gold-light);
-  font-size: 22px;
-  margin-bottom: 2px;
+  font-size: 24px;
+  margin-bottom: 4px;
 }
 .hero-kicker {
   display: block;
@@ -138,13 +138,13 @@ img { max-width: 100%; display: block; }
   color: var(--gold);
   font-family: 'Helvetica Neue', Arial, sans-serif;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 .hero h1 {
   font-family: 'Playfair Display', 'Georgia', serif;
-  font-size: 46px;
+  font-size: 56px;
   font-weight: 700;
-  letter-spacing: 5px;
+  letter-spacing: 6px;
   color: var(--pink-dark);
   margin: 0;
   line-height: 1.1;
@@ -152,9 +152,9 @@ img { max-width: 100%; display: block; }
 .hero-slogan {
   font-family: 'Playfair Display', 'Georgia', serif;
   font-style: italic;
-  font-size: 18px;
+  font-size: 20px;
   color: var(--gold);
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   letter-spacing: .3px;
 }
 .hero-divider {
@@ -162,20 +162,20 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin: 16px auto 14px;
-  width: 220px;
+  margin: 22px auto 20px;
+  width: 240px;
 }
 .hero-divider span:not(.hero-divider-star) { flex: 1; height: 1px; background: var(--gold-light); }
-.hero-divider-star { color: var(--gold); font-size: 14px; }
-.hero p { color: var(--ink-soft); font-size: 15.5px; max-width: 480px; margin: 0 auto 20px; line-height: 1.55; }
-.hero-cta { padding: 13px 34px; font-size: 14.5px; letter-spacing: .6px; }
-.hero-soon { color: var(--gold); font-size: 13px; margin: 14px auto 0; letter-spacing: .3px; font-style: italic; }
-.country-toggle { margin-bottom: 16px; }
-.country-toggle-label { display: block; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 8px; letter-spacing: .3px; }
+.hero-divider-star { color: var(--gold); font-size: 15px; }
+.hero p { color: var(--ink-soft); font-size: 16.5px; max-width: 480px; margin: 0 auto 28px; line-height: 1.65; font-family: 'Playfair Display', 'Georgia', serif; }
+.hero-cta { padding: 15px 40px; font-size: 15px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+.hero-soon { color: var(--gold); font-size: 13.5px; margin: 20px auto 0; letter-spacing: .3px; font-style: italic; font-family: 'Playfair Display', 'Georgia', serif; }
+.country-toggle { margin-bottom: 22px; }
+.country-toggle-label { display: block; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 9px; letter-spacing: .3px; }
 .country-pills { display: flex; gap: 10px; justify-content: center; }
 .country-pill {
   background: white; border: 1.5px solid var(--border); color: var(--ink-soft);
-  padding: 8px 18px; border-radius: 24px; font-size: 13.5px; font-weight: 600;
+  padding: 9px 20px; border-radius: 24px; font-size: 13.5px; font-weight: 600;
   transition: border-color .15s, color .15s, background .15s;
 }
 .country-pill:hover { border-color: var(--gold-light); }
@@ -188,9 +188,9 @@ img { max-width: 100%; display: block; }
 }
 .country-tab { font-size: 13px; }
 @media (max-width: 640px) {
-  .hero { padding: 40px 22px 30px; }
-  .hero h1 { font-size: 34px; letter-spacing: 3px; }
-  .hero-slogan { font-size: 16px; }
+  .hero { padding: 42px 22px 34px; }
+  .hero h1 { font-size: 38px; letter-spacing: 3px; }
+  .hero-slogan { font-size: 17px; }
 }
 
 /* ---------- Product grid ---------- */
