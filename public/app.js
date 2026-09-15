@@ -216,6 +216,11 @@ function addSimpleToCart(id) {
 //                        will NOT be visible on the finished product.
 //                        Shown semi-transparent in edit mode as a warning.
 
+// The visible area above the black square (client's photo goes here by
+// default) stops at this % of the page height — below it is the black
+// square + fixed footer, which the photo doesn't need to fill by default.
+const CZ_TOP_ZONE_H = 52.4;
+
 function freshCzState(productId) {
   return {
     productId,
@@ -277,13 +282,13 @@ function renderCustomize(id) {
               </label>
               <div class="hint">Glissez la photo pour la déplacer. Tirez sur un des 4 coins de l'aperçu pour changer sa largeur et sa hauteur exactement comme vous voulez.</div>
               <button class="btn secondary small" style="margin-top:10px;" onclick="removeCzPhoto()">Retirer la photo</button>
-            ` : `<div class="hint">Format conseillé : bonne résolution. Elle peut couvrir toute la page.</div>`}
+            ` : `<div class="hint">Format conseillé : bonne résolution. Elle s'adapte d'abord à la zone visible du haut — vous pourrez l'agrandir ensuite si vous voulez.</div>`}
           </div>
 
           ${showBgColorPicker ? `
           <div class="cz-block" id="czBgColorBlock">
             <div class="cz-step-header">Couleur de fond</div>
-            <div class="hint" style="margin-bottom:8px;">Votre photo ne couvre pas toute la page : choisissez une couleur pour le fond restant, ou prélevez-la directement sur votre photo.</div>
+            <div class="hint" style="margin-bottom:8px;">Un peu de fond reste visible autour du carré central : choisissez une couleur, ou prélevez-la directement sur votre photo avec la pipette.</div>
             <div style="display:flex; gap:10px; align-items:center;">
               <input type="color" value="${cz.bgColor}" oninput="setCzBgColor(this.value)" style="width:44px; height:38px; padding:2px; cursor:pointer;"/>
               ${typeof window !== "undefined" && window.EyeDropper ? `
@@ -442,8 +447,10 @@ function onCzPhotoChange(evt) {
   const reader = new FileReader();
   reader.onload = (e) => {
     state.cz.photo = e.target.result;
-    // start by filling the whole page — client then adjusts freely
-    state.cz.photoX = 0; state.cz.photoY = 0; state.cz.photoW = 100; state.cz.photoH = 100;
+    // Start by filling the visible top zone only (above the black square) —
+    // not the whole page, since the bottom half is mostly hidden anyway.
+    // The client can still drag/resize freely afterwards.
+    state.cz.photoX = 0; state.cz.photoY = 0; state.cz.photoW = 100; state.cz.photoH = CZ_TOP_ZONE_H;
     render();
   };
   reader.readAsDataURL(file);
