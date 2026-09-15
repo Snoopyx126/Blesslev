@@ -112,22 +112,23 @@ img { max-width: 100%; display: block; }
 /* ---------- Layout ---------- */
 .page { max-width: 1220px; margin: 0 auto; padding: 40px 24px 100px; min-height: 60vh; }
 .page-narrow { max-width: 680px; margin: 0 auto; padding: 30px 20px 80px; }
+.page-home { padding-top: 20px; padding-bottom: 20px; min-height: auto; }
 
 /* ---------- Hero ---------- */
 .hero {
   position: relative;
   background: linear-gradient(160deg, var(--pink-light) 0%, #fff 55%, var(--cream) 100%);
   border-radius: 24px;
-  padding: 90px 40px 76px;
+  padding: 44px 40px 34px;
   text-align: center;
-  margin-bottom: 64px;
+  margin-bottom: 0;
   border: 1px solid var(--border);
   overflow: hidden;
 }
 .hero-motif {
   color: var(--gold-light);
-  font-size: 30px;
-  margin-bottom: 8px;
+  font-size: 22px;
+  margin-bottom: 2px;
 }
 .hero-kicker {
   display: block;
@@ -137,13 +138,13 @@ img { max-width: 100%; display: block; }
   color: var(--gold);
   font-family: 'Helvetica Neue', Arial, sans-serif;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 .hero h1 {
   font-family: 'Playfair Display', 'Georgia', serif;
-  font-size: 64px;
+  font-size: 46px;
   font-weight: 700;
-  letter-spacing: 6px;
+  letter-spacing: 5px;
   color: var(--pink-dark);
   margin: 0;
   line-height: 1.1;
@@ -151,9 +152,9 @@ img { max-width: 100%; display: block; }
 .hero-slogan {
   font-family: 'Playfair Display', 'Georgia', serif;
   font-style: italic;
-  font-size: 22px;
+  font-size: 18px;
   color: var(--gold);
-  margin: 18px 0 0;
+  margin: 10px 0 0;
   letter-spacing: .3px;
 }
 .hero-divider {
@@ -161,20 +162,20 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin: 28px auto 26px;
-  width: 260px;
+  margin: 16px auto 14px;
+  width: 220px;
 }
 .hero-divider span:not(.hero-divider-star) { flex: 1; height: 1px; background: var(--gold-light); }
-.hero-divider-star { color: var(--gold); font-size: 15px; }
-.hero p { color: var(--ink-soft); font-size: 17px; max-width: 500px; margin: 0 auto 36px; line-height: 1.8; }
-.hero-cta { padding: 16px 40px; font-size: 15px; letter-spacing: .6px; }
-.hero-soon { color: var(--gold); font-size: 14px; margin: 22px auto 0; letter-spacing: .3px; font-style: italic; }
-.country-toggle { margin-bottom: 28px; }
-.country-toggle-label { display: block; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 10px; letter-spacing: .3px; }
+.hero-divider-star { color: var(--gold); font-size: 14px; }
+.hero p { color: var(--ink-soft); font-size: 15.5px; max-width: 480px; margin: 0 auto 20px; line-height: 1.55; }
+.hero-cta { padding: 13px 34px; font-size: 14.5px; letter-spacing: .6px; }
+.hero-soon { color: var(--gold); font-size: 13px; margin: 14px auto 0; letter-spacing: .3px; font-style: italic; }
+.country-toggle { margin-bottom: 16px; }
+.country-toggle-label { display: block; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 8px; letter-spacing: .3px; }
 .country-pills { display: flex; gap: 10px; justify-content: center; }
 .country-pill {
   background: white; border: 1.5px solid var(--border); color: var(--ink-soft);
-  padding: 9px 20px; border-radius: 24px; font-size: 14px; font-weight: 600;
+  padding: 8px 18px; border-radius: 24px; font-size: 13.5px; font-weight: 600;
   transition: border-color .15s, color .15s, background .15s;
 }
 .country-pill:hover { border-color: var(--gold-light); }
@@ -187,9 +188,9 @@ img { max-width: 100%; display: block; }
 }
 .country-tab { font-size: 13px; }
 @media (max-width: 640px) {
-  .hero { padding: 64px 24px 52px; }
-  .hero h1 { font-size: 42px; letter-spacing: 3px; }
-  .hero-slogan { font-size: 18px; }
+  .hero { padding: 40px 22px 30px; }
+  .hero h1 { font-size: 34px; letter-spacing: 3px; }
+  .hero-slogan { font-size: 16px; }
 }
 
 /* ---------- Product grid ---------- */
@@ -365,6 +366,8 @@ img { max-width: 100%; display: block; }
   overflow: hidden;
   box-shadow: var(--shadow-lift);
 }
+.cz-preview.picking-color, .cz-preview.picking-color .cz-photo-box { cursor: crosshair !important; }
+.pipette-btn.active { background: var(--pink); color: white; border-color: var(--pink); }
 /* Photo box: covers whatever width/height/position the client sets. Can be
    dragged anywhere and can extend behind the black square — the black mask
    (top layer) is what actually hides it there. */
@@ -373,9 +376,8 @@ img { max-width: 100%; display: block; }
   overflow: hidden;
   cursor: grab;
   touch-action: none;
-  outline: 1px dashed rgba(217,119,176,0.5);
-  outline-offset: -1px;
 }
+.cz-photo-box.selected { outline: 1px dashed rgba(217,119,176,0.5); outline-offset: -1px; }
 .cz-photo-box.dragging { cursor: grabbing; }
 .cz-photo-box img {
   width: 100%; height: 100%;

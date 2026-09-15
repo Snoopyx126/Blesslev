@@ -136,7 +136,7 @@ function renderFooter() {
 // ---------------- Home / Vitrine ----------------
 function renderHome() {
   return `
-    <div class="page">
+    <div class="page page-home">
       <div class="hero">
         <div class="hero-motif">✧</div>
         <span class="hero-kicker">Créations personnalisées</span>
@@ -229,12 +229,14 @@ function freshCzState(productId) {
     photoX: 0, photoY: 0, photoW: 100, photoH: 100,
     keepRatio: true, // checkbox: lock width/height ratio while resizing (on by default; user can uncheck to stretch freely)
     bgColor: "#efe9e0", // fills any space left visible when the photo doesn't cover the whole page
+    pickingColor: false, // true while the eyedropper is armed, waiting for a click on the photo
     text: "", textColor: "#3a332c", fontSize: 26, fontFamily: FONTS_FLAT[0].css,
     textX: 20, textY: 14, textW: 60, // % box: top-left position + width (page reflows within it)
     fontDropdownOpen: false,
     frame: "none",
     editMode: true, // true = show warning tint on the locked zone; false = true final preview
     draggingPhoto: false, dragStartPhoto: null,
+    photoSelected: false, // true while the photo box is actively selected — shows its outline/handles
     draggingText: false, dragStartText: null,
     resizingCorner: null, resizeStart: null,
   };
@@ -288,12 +290,10 @@ function renderCustomize(id) {
           ${showBgColorPicker ? `
           <div class="cz-block" id="czBgColorBlock">
             <div class="cz-step-header">Couleur de fond</div>
-            <div class="hint" style="margin-bottom:8px;">Un peu de fond reste visible autour du carré central : choisissez une couleur, ou prélevez-la directement sur votre photo avec la pipette.</div>
+            <div class="hint" style="margin-bottom:8px;">Un peu de fond reste visible autour du carré central : choisissez une couleur, ou cliquez sur la pipette puis sur votre photo pour prélever une couleur directement dessus.</div>
             <div style="display:flex; gap:10px; align-items:center;">
               <input type="color" value="${cz.bgColor}" oninput="setCzBgColor(this.value)" style="width:44px; height:38px; padding:2px; cursor:pointer;"/>
-              ${typeof window !== "undefined" && window.EyeDropper ? `
-              <button type="button" class="btn secondary small" onclick="pickCzBgColorFromPhoto()">🎨 Prélever sur la photo</button>
-              ` : `<div class="hint" style="margin:0;">Astuce : la pipette de votre sélecteur de couleur (icône 💧) permet aussi de prélever une couleur directement sur la photo.</div>`}
+              <button type="button" class="btn secondary small pipette-btn ${cz.pickingColor ? "active" : ""}" onclick="toggleCzColorPicking()">💧 ${cz.pickingColor ? "Cliquez sur la photo…" : "Pipette"}</button>
             </div>
           </div>` : ""}
 
@@ -342,14 +342,14 @@ function renderCustomize(id) {
         </div>
 
         <div class="cz-preview-outer">
-          <div class="cz-preview" id="czPreview" style="background:${cz.bgColor};">
+          <div class="cz-preview ${cz.pickingColor ? "picking-color" : ""}" id="czPreview" style="background:${cz.bgColor};" onclick="czPreviewClickForColorPick(event)">
             ${cz.photo ? `
-              <div class="cz-photo-box" id="czPhotoBox"
+              <div class="cz-photo-box ${cz.photoSelected ? "selected" : ""}" id="czPhotoBox"
                    style="left:${cz.photoX}%; top:${cz.photoY}%; width:${cz.photoW}%; height:${cz.photoH}%;"
                    onmousedown="czPhotoDragStart(event)" ontouchstart="czPhotoDragStart(event)">
                 <img id="czPhotoImg" src="${cz.photo}" draggable="false"/>
-                ${corners.map(c => `<div class="cz-corner-handle corner-${c}" data-corner="${c}"
-                     onmousedown="czCornerDragStart(event,'${c}')" ontouchstart="czCornerDragStart(event,'${c}')"></div>`).join("")}
+                ${cz.photoSelected ? corners.map(c => `<div class="cz-corner-handle corner-${c}" data-corner="${c}"
+                     onmousedown="czCornerDragStart(event,'${c}')" ontouchstart="czCornerDragStart(event,'${c}')"></div>`).join("") : ""}
               </div>
             ` : `<div class="cz-empty-msg">Votre photo apparaîtra ici<br/>(elle peut couvrir toute la page)</div>`}
 
@@ -415,6 +415,10 @@ document.addEventListener("click", (e) => {
     state.cz.fontDropdownOpen = false;
     render();
   }
+  if (state.cz && state.cz.photoSelected && !e.target.closest("#czPhotoBox")) {
+    state.cz.photoSelected = false;
+    render();
+  }
 });
 function setCzKeepRatio(v) { state.cz.keepRatio = v; }
 function toggleCzPreview(checked) { state.cz.editMode = !checked; render(); }
@@ -424,16 +428,51 @@ function setCzBgColor(v) {
   const el = document.getElementById("czPreview");
   if (el) el.style.background = v; else render();
 }
-async function pickCzBgColorFromPhoto() {
-  if (!window.EyeDropper) return;
-  try {
-    const eyeDropper = new EyeDropper();
-    const result = await eyeDropper.open();
-    setCzBgColor(result.sRGBHex);
+
+// ---- Eyedropper: arm it with the button, then click anywhere on the photo
+// in the preview to sample that pixel's color as the background fill.
+// Built with a canvas (works in every browser, incl. Safari — unlike the
+// native EyeDropper API, which is Chrome/Edge-only). ----
+function toggleCzColorPicking() {
+  state.cz.pickingColor = !state.cz.pickingColor;
+  render();
+}
+function czPreviewClickForColorPick(evt) {
+  if (!state.cz.pickingColor) return;
+  const img = document.getElementById("czPhotoImg");
+  if (!img) {
+    toast("Ajoutez une photo pour pouvoir y prélever une couleur.");
+    state.cz.pickingColor = false;
     render();
-  } catch (e) {
-    // User pressed Escape / cancelled — nothing to do.
+    return;
   }
+  const rect = img.getBoundingClientRect();
+  const point = evt.touches ? evt.touches[0] : evt;
+  const xRatio = (point.clientX - rect.left) / rect.width;
+  const yRatio = (point.clientY - rect.top) / rect.height;
+  if (xRatio < 0 || xRatio > 1 || yRatio < 0 || yRatio > 1) {
+    toast("Cliquez directement sur la photo pour prélever une couleur.");
+    return;
+  }
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const px = ctx.getImageData(
+      Math.min(canvas.width - 1, Math.floor(xRatio * canvas.width)),
+      Math.min(canvas.height - 1, Math.floor(yRatio * canvas.height)),
+      1, 1
+    ).data;
+    const hex = "#" + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, "0")).join("");
+    setCzBgColor(hex);
+    toast("Couleur prélevée ✓");
+  } catch (e) {
+    toast("Impossible de prélever cette couleur.");
+  }
+  state.cz.pickingColor = false;
+  render();
 }
 
 function removeCzPhoto() {
@@ -451,6 +490,7 @@ function onCzPhotoChange(evt) {
     // not the whole page, since the bottom half is mostly hidden anyway.
     // The client can still drag/resize freely afterwards.
     state.cz.photoX = 0; state.cz.photoY = 0; state.cz.photoW = 100; state.cz.photoH = CZ_TOP_ZONE_H;
+    state.cz.photoSelected = true; // show handles right away so the client knows they can resize
     render();
   };
   reader.readAsDataURL(file);
@@ -480,9 +520,14 @@ function applyPhotoBoxStyle() {
 // ---- Dragging: move the photo box around (position only, no resize) ----
 function czPhotoDragStart(evt) {
   if (evt.target.classList.contains("cz-corner-handle")) return; // handles manage their own drag
+  if (state.cz.pickingColor) return; // eyedropper armed — clicking the photo picks a color instead of dragging
   const point = evt.touches ? evt.touches[0] : evt;
   state.cz.draggingPhoto = true;
   state.cz.dragStartPhoto = { x: point.clientX, y: point.clientY, photoX: state.cz.photoX, photoY: state.cz.photoY };
+  if (!state.cz.photoSelected) {
+    state.cz.photoSelected = true;
+    render();
+  }
   const box = document.getElementById("czPhotoBox");
   if (box) box.classList.add("dragging");
 }
