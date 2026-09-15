@@ -381,7 +381,7 @@ img { max-width: 100%; display: block; }
 .cz-photo-box.dragging { cursor: grabbing; }
 .cz-photo-box img {
   width: 100%; height: 100%;
-  object-fit: fill; /* stretches exactly to the box the client defines */
+  object-fit: cover; /* fills the box without distorting — resizing crops/reveals rather than squishing */
   user-select: none;
   pointer-events: none;
   display: block;
@@ -402,6 +402,27 @@ img { max-width: 100%; display: block; }
 .corner-sw { left: 0; top: 100%; cursor: nesw-resize; }
 .corner-se { left: 100%; top: 100%; cursor: nwse-resize; }
 .cz-corner-handle:hover { background: var(--pink); }
+.cz-side-handle {
+  position: absolute;
+  background: white;
+  border: 2px solid var(--pink);
+  z-index: 9;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  touch-action: none;
+}
+.cz-side-handle:hover { background: var(--pink); }
+.side-n, .side-s {
+  left: 50%; width: 28px; height: 10px; margin-left: -14px; border-radius: 5px;
+  cursor: ns-resize;
+}
+.side-n { top: 0; margin-top: -5px; }
+.side-s { top: 100%; margin-top: -5px; }
+.side-e, .side-w {
+  top: 50%; width: 10px; height: 28px; margin-top: -14px; border-radius: 5px;
+  cursor: ew-resize;
+}
+.side-w { left: 0; margin-left: -5px; }
+.side-e { left: 100%; margin-left: -5px; }
 .cz-empty-msg {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   color: #8d857a; font-size: 13px; text-align: center; padding: 20px; pointer-events: none;

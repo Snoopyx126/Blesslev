@@ -253,6 +253,7 @@ function freshCzState(productId) {
     photoSelected: false, // true while the photo box is actively selected — shows its outline/handles
     draggingText: false, dragStartText: null,
     resizingCorner: null, resizeStart: null,
+    resizingPhotoSide: null, photoSideResizeStart: null,
   };
 }
 
@@ -276,6 +277,7 @@ function renderCustomize(id) {
   ).join("");
 
   const corners = ["nw", "ne", "sw", "se"];
+  const sides = ["n", "s", "e", "w"];
   const photoCoversPage = cz.photo && cz.photoX <= 0.5 && cz.photoY <= 0.5 && (cz.photoX + cz.photoW) >= 99.5 && (cz.photoY + cz.photoH) >= 99.5;
   const showBgColorPicker = cz.photo && !photoCoversPage;
 
@@ -296,7 +298,7 @@ function renderCustomize(id) {
                 <input type="checkbox" ${cz.keepRatio ? "checked" : ""} onchange="setCzKeepRatio(this.checked)"/>
                 Conserver les proportions largeur / hauteur
               </label>
-              <div class="hint">Glissez la photo pour la déplacer. Tirez sur un des 4 coins de l'aperçu pour changer sa largeur et sa hauteur exactement comme vous voulez.</div>
+              <div class="hint">Glissez la photo pour la déplacer. Tirez sur un des 4 coins pour changer sa taille. Tirez sur le milieu d'un bord pour rogner la photo sur la largeur ou la hauteur.</div>
               <button class="btn secondary small" style="margin-top:10px;" onclick="removeCzPhoto()">Retirer la photo</button>
             ` : `<div class="hint">Format conseillé : bonne résolution. Elle s'adapte d'abord à la zone visible du haut — vous pourrez l'agrandir ensuite si vous voulez.</div>`}
           </div>
@@ -364,6 +366,8 @@ function renderCustomize(id) {
                 <img id="czPhotoImg" src="${cz.photo}" draggable="false"/>
                 ${cz.photoSelected ? corners.map(c => `<div class="cz-corner-handle corner-${c}" data-corner="${c}"
                      onmousedown="czCornerDragStart(event,'${c}')" ontouchstart="czCornerDragStart(event,'${c}')"></div>`).join("") : ""}
+                ${cz.photoSelected ? sides.map(s => `<div class="cz-side-handle side-${s}" data-side="${s}"
+                     onmousedown="czPhotoSideDragStart(event,'${s}')" ontouchstart="czPhotoSideDragStart(event,'${s}')"></div>`).join("") : ""}
               </div>
             ` : `<div class="cz-empty-msg">Votre photo apparaîtra ici<br/>(elle peut couvrir toute la page)</div>`}
 
@@ -607,6 +611,54 @@ function czCornerDragEnd() {
   state.cz.resizeStart = null;
 }
 
+// ---- Side handles: crop the photo along one axis only (width OR height),
+// anchored on the opposite edge — the image itself doesn't stretch since it
+// uses object-fit:cover, so shrinking a side visually crops/cuts the photo
+// instead of squishing it. ----
+function czPhotoSideDragStart(evt, side) {
+  evt.stopPropagation();
+  evt.preventDefault();
+  const point = evt.touches ? evt.touches[0] : evt;
+  const preview = document.getElementById("czPreview");
+  const rect = preview.getBoundingClientRect();
+  state.cz.resizingPhotoSide = side;
+  state.cz.photoSideResizeStart = {
+    x: point.clientX, y: point.clientY,
+    rectW: rect.width, rectH: rect.height,
+    leftPx: (state.cz.photoX / 100) * rect.width,
+    topPx: (state.cz.photoY / 100) * rect.height,
+    wPx: (state.cz.photoW / 100) * rect.width,
+    hPx: (state.cz.photoH / 100) * rect.height,
+  };
+}
+function czPhotoSideDragMove(evt) {
+  const side = state.cz.resizingPhotoSide;
+  if (!side) return;
+  const point = evt.touches ? evt.touches[0] : evt;
+  const d = state.cz.photoSideResizeStart;
+
+  if (side === "e" || side === "w") {
+    const dx = point.clientX - d.x;
+    let newW = side === "e" ? d.wPx + dx : d.wPx - dx;
+    newW = Math.max(20, newW);
+    const newLeft = side === "w" ? d.leftPx + (d.wPx - newW) : d.leftPx;
+    state.cz.photoX = (newLeft / d.rectW) * 100;
+    state.cz.photoW = (newW / d.rectW) * 100;
+  } else {
+    const dy = point.clientY - d.y;
+    let newH = side === "s" ? d.hPx + dy : d.hPx - dy;
+    newH = Math.max(20, newH);
+    const newTop = side === "n" ? d.topPx + (d.hPx - newH) : d.topPx;
+    state.cz.photoY = (newTop / d.rectH) * 100;
+    state.cz.photoH = (newH / d.rectH) * 100;
+  }
+  applyPhotoBoxStyle();
+}
+function czPhotoSideDragEnd() {
+  state.cz.resizingPhotoSide = null;
+  state.cz.photoSideResizeStart = null;
+}
+
 // ---- Dragging: client's text box (moves position, keeps its width) ----
 function czTextDragStart(evt) {
   evt.stopPropagation();
@@ -697,6 +749,9 @@ function czGlobalMove(evt) {
   } else if (state.cz.resizingTextSide) {
     evt.preventDefault();
     czTextHandleDragMove(evt);
+  } else if (state.cz.resizingPhotoSide) {
+    evt.preventDefault();
+    czPhotoSideDragMove(evt);
   }
 }
 function czGlobalEnd() {
@@ -712,11 +767,12 @@ function czGlobalEnd() {
   }
   if (state.cz.resizingCorner) czCornerDragEnd();
   if (state.cz.resizingTextSide) czTextHandleDragEnd();
+  if (state.cz.resizingPhotoSide) czPhotoSideDragEnd();
 }
 // document-level listeners so a fast drag that leaves the element still tracks
-document.addEventListener("mousemove", (e) => { if (state.cz && (state.cz.draggingPhoto || state.cz.draggingText || state.cz.resizingCorner || state.cz.resizingTextSide)) czGlobalMove(e); });
+document.addEventListener("mousemove", (e) => { if (state.cz && (state.cz.draggingPhoto || state.cz.draggingText || state.cz.resizingCorner || state.cz.resizingTextSide || state.cz.resizingPhotoSide)) czGlobalMove(e); });
 document.addEventListener("mouseup", (e) => { if (state.cz) czGlobalEnd(e); });
-document.addEventListener("touchmove", (e) => { if (state.cz && (state.cz.draggingPhoto || state.cz.draggingText || state.cz.resizingCorner || state.cz.resizingTextSide)) czGlobalMove(e); }, { passive: false });
+document.addEventListener("touchmove", (e) => { if (state.cz && (state.cz.draggingPhoto || state.cz.draggingText || state.cz.resizingCorner || state.cz.resizingTextSide || state.cz.resizingPhotoSide)) czGlobalMove(e); }, { passive: false });
 document.addEventListener("touchend", (e) => { if (state.cz) czGlobalEnd(e); });
 
 function addCustomCalendarToCart() {
