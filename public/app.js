@@ -135,22 +135,6 @@ function renderFooter() {
 
 // ---------------- Home / Vitrine ----------------
 function renderHome() {
-  const cards = PRODUCTS.map(
-    (p) => `
-    <div class="product-card" onclick="navigate({name:'product', id:'${p.id}'})">
-      <div class="thumb"><img src="${p.images[0]}" alt="${esc(p.name)}"/></div>
-      <div class="info">
-        ${p.custom ? `<span class="badge-custom">✨ Personnalisable</span>` : ""}
-        <h3>${esc(p.name)}</h3>
-        <p class="desc">${esc(p.shortDesc)}</p>
-        <div class="card-bottom">
-          <span class="price">${money(p.price)}</span>
-          <span class="card-arrow">→</span>
-        </div>
-      </div>
-    </div>`
-  ).join("");
-
   return `
     <div class="page">
       <div class="hero">
@@ -159,7 +143,7 @@ function renderHome() {
         <h1 class="serif">BLESSLEV</h1>
         <p class="hero-slogan">Des bénédictions à emporter</p>
         <div class="hero-divider"><span></span><span class="hero-divider-star">✦</span><span></span></div>
-        <p>Calendriers, livrets de prières et objets à thème judaïque, personnalisés avec soin pour célébrer chaque moment qui compte.</p>
+        <p>Votre calendrier personnalisé, avec votre photo et votre texte, pour célébrer chaque moment qui compte.</p>
         <div class="country-toggle">
           <span class="country-toggle-label">Vous commandez depuis :</span>
           <div class="country-pills">
@@ -167,10 +151,9 @@ function renderHome() {
             <button class="country-pill ${state.country === "israel" ? "active" : ""}" onclick="setCountry('israel')">🇮🇱 Israël</button>
           </div>
         </div>
-        <button class="btn hero-cta" onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">Découvrir la boutique</button>
+        <button class="btn hero-cta" onclick="navigate({name:'customize', id:'calendrier-5787'})">🎨 Commencer à personnaliser votre calendrier</button>
+        <p class="hero-soon">✨ Plein de nouveautés arrivent très bientôt chez BLESSLEV — restez à l'écoute !</p>
       </div>
-      <h2 id="shop" class="section-title serif">Notre boutique</h2>
-      <div class="product-grid">${cards}</div>
     </div>`;
 }
 
@@ -239,7 +222,8 @@ function freshCzState(productId) {
     photo: null,
     // Photo box position & size, all in % of the preview container (responsive)
     photoX: 0, photoY: 0, photoW: 100, photoH: 100,
-    keepRatio: false, // checkbox: lock width/height ratio while resizing
+    keepRatio: true, // checkbox: lock width/height ratio while resizing (on by default; user can uncheck to stretch freely)
+    bgColor: "#efe9e0", // fills any space left visible when the photo doesn't cover the whole page
     text: "", textColor: "#3a332c", fontSize: 26, fontFamily: FONTS_FLAT[0].css,
     textX: 20, textY: 14, textW: 60, // % box: top-left position + width (page reflows within it)
     fontDropdownOpen: false,
@@ -271,6 +255,8 @@ function renderCustomize(id) {
   ).join("");
 
   const corners = ["nw", "ne", "sw", "se"];
+  const photoCoversPage = cz.photo && cz.photoX <= 0.5 && cz.photoY <= 0.5 && (cz.photoX + cz.photoW) >= 99.5 && (cz.photoY + cz.photoH) >= 99.5;
+  const showBgColorPicker = cz.photo && !photoCoversPage;
 
   return `
     <div class="page">
@@ -293,6 +279,18 @@ function renderCustomize(id) {
               <button class="btn secondary small" style="margin-top:10px;" onclick="removeCzPhoto()">Retirer la photo</button>
             ` : `<div class="hint">Format conseillé : bonne résolution. Elle peut couvrir toute la page.</div>`}
           </div>
+
+          ${showBgColorPicker ? `
+          <div class="cz-block" id="czBgColorBlock">
+            <div class="cz-step-header">Couleur de fond</div>
+            <div class="hint" style="margin-bottom:8px;">Votre photo ne couvre pas toute la page : choisissez une couleur pour le fond restant, ou prélevez-la directement sur votre photo.</div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="color" value="${cz.bgColor}" oninput="setCzBgColor(this.value)" style="width:44px; height:38px; padding:2px; cursor:pointer;"/>
+              ${typeof window !== "undefined" && window.EyeDropper ? `
+              <button type="button" class="btn secondary small" onclick="pickCzBgColorFromPhoto()">🎨 Prélever sur la photo</button>
+              ` : `<div class="hint" style="margin:0;">Astuce : la pipette de votre sélecteur de couleur (icône 💧) permet aussi de prélever une couleur directement sur la photo.</div>`}
+            </div>
+          </div>` : ""}
 
           <div class="cz-block">
             <div class="cz-step-header"><span class="step-num">2</span>Votre texte</div>
@@ -339,7 +337,7 @@ function renderCustomize(id) {
         </div>
 
         <div class="cz-preview-outer">
-          <div class="cz-preview" id="czPreview">
+          <div class="cz-preview" id="czPreview" style="background:${cz.bgColor};">
             ${cz.photo ? `
               <div class="cz-photo-box" id="czPhotoBox"
                    style="left:${cz.photoX}%; top:${cz.photoY}%; width:${cz.photoW}%; height:${cz.photoH}%;"
@@ -415,6 +413,23 @@ document.addEventListener("click", (e) => {
 });
 function setCzKeepRatio(v) { state.cz.keepRatio = v; }
 function toggleCzPreview(checked) { state.cz.editMode = !checked; render(); }
+
+function setCzBgColor(v) {
+  state.cz.bgColor = v;
+  const el = document.getElementById("czPreview");
+  if (el) el.style.background = v; else render();
+}
+async function pickCzBgColorFromPhoto() {
+  if (!window.EyeDropper) return;
+  try {
+    const eyeDropper = new EyeDropper();
+    const result = await eyeDropper.open();
+    setCzBgColor(result.sRGBHex);
+    render();
+  } catch (e) {
+    // User pressed Escape / cancelled — nothing to do.
+  }
+}
 
 function removeCzPhoto() {
   state.cz.photo = null;
@@ -656,6 +671,7 @@ function addCustomCalendarToCart() {
       photo: state.cz.photo,
       photoX: state.cz.photoX, photoY: state.cz.photoY,
       photoW: state.cz.photoW, photoH: state.cz.photoH,
+      bgColor: state.cz.bgColor,
       text: state.cz.text,
       textColor: state.cz.textColor,
       fontFamily: state.cz.fontFamily,
@@ -1169,6 +1185,7 @@ function buildCalendarVisualNode(customization) {
   wrap.style.top = "0";
   wrap.style.width = "900px";
   wrap.style.maxWidth = "none";
+  wrap.style.background = c.bgColor || "#efe9e0";
 
   let html = "";
   if (c.photo) {

@@ -168,6 +168,7 @@ img { max-width: 100%; display: block; }
 .hero-divider-star { color: var(--gold); font-size: 15px; }
 .hero p { color: var(--ink-soft); font-size: 17px; max-width: 500px; margin: 0 auto 36px; line-height: 1.8; }
 .hero-cta { padding: 16px 40px; font-size: 15px; letter-spacing: .6px; }
+.hero-soon { color: var(--gold); font-size: 14px; margin: 22px auto 0; letter-spacing: .3px; font-style: italic; }
 .country-toggle { margin-bottom: 28px; }
 .country-toggle-label { display: block; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 10px; letter-spacing: .3px; }
 .country-pills { display: flex; gap: 10px; justify-content: center; }
