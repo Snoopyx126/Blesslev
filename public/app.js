@@ -230,11 +230,6 @@ function addSimpleToCart(id) {
 //                        will NOT be visible on the finished product.
 //                        Shown semi-transparent in edit mode as a warning.
 
-// The visible area above the black square (client's photo goes here by
-// default) stops at this % of the page height — below it is the black
-// square + fixed footer, which the photo doesn't need to fill by default.
-const CZ_TOP_ZONE_H = 52.4;
-
 function freshCzState(productId) {
   return {
     productId,
@@ -268,14 +263,6 @@ function renderCustomize(id) {
   if (!state.cz || state.cz.productId !== id) state.cz = freshCzState(id);
   const cz = state.cz;
 
-  const frameButtons = FRAMES.map(
-    (f) => `
-    <button class="frame-opt ${cz.frame === f.id ? "active" : ""}" title="${f.label}"
-      onclick="setCzFrame('${f.id}')">
-      ${f.id === "none" ? "✕" : frameSVG(f.id)}
-    </button>`
-  ).join("");
-
   const corners = ["nw", "ne", "sw", "se"];
   const sides = ["n", "s", "e", "w"];
   const photoCoversPage = cz.photo && cz.photoX <= 0.5 && cz.photoY <= 0.5 && (cz.photoX + cz.photoW) >= 99.5 && (cz.photoY + cz.photoH) >= 99.5;
@@ -300,7 +287,7 @@ function renderCustomize(id) {
               </label>
               <div class="hint">Glissez la photo pour la déplacer. Tirez sur un des 4 coins pour changer sa taille. Tirez sur le milieu d'un bord pour rogner la photo sur la largeur ou la hauteur.</div>
               <button class="btn secondary small" style="margin-top:10px;" onclick="removeCzPhoto()">Retirer la photo</button>
-            ` : `<div class="hint">Format conseillé : bonne résolution. Elle s'adapte d'abord à la zone visible du haut — vous pourrez l'agrandir ensuite si vous voulez.</div>`}
+            ` : `<div class="hint">Format conseillé : bonne résolution. Elle couvre toute la page par défaut — vous pourrez ensuite la recadrer comme vous voulez.</div>`}
           </div>
 
           ${showBgColorPicker ? `
@@ -340,18 +327,13 @@ function renderCustomize(id) {
             <div class="hint">Glissez le texte dans l'aperçu pour le déplacer. Tirez les poignées à gauche/droite du texte pour l'étirer (mots côte à côte) ou le resserrer (mots les uns sous les autres).</div>
           </div>
 
-          <div class="cz-block">
-            <div class="cz-step-header"><span class="step-num">3</span>Cadre décoratif</div>
-            <div class="frame-options">${frameButtons}</div>
-          </div>
-
           <label class="toggle-row">
             <input type="checkbox" ${!cz.editMode ? "checked" : ""} onchange="toggleCzPreview(this.checked)"/>
             Aperçu du rendu final (masque le carré à 100%)
           </label>
 
           <div class="lock-note">
-            🔒 Le carré noir et la bénédiction imprimée en dessous font partie du modèle déposé BLESSLEV et ne sont jamais modifiables. Tout élément (photo, texte, cadre) placé derrière le carré ne sera pas visible sur le calendrier fini — la zone grisée dans l'aperçu vous montre où.
+            🔒 Le carré noir et la bénédiction imprimée en dessous font partie du modèle déposé BLESSLEV et ne sont jamais modifiables. Tout élément (photo, texte) placé derrière le carré ne sera pas visible sur le calendrier fini — la zone grisée dans l'aperçu vous montre où.
           </div>
 
           <button class="btn full" style="margin-top:6px;" onclick="addCustomCalendarToCart()">Ajouter au panier — ${money(p.price)}</button>
@@ -504,10 +486,8 @@ function onCzPhotoChange(evt) {
   const reader = new FileReader();
   reader.onload = (e) => {
     state.cz.photo = e.target.result;
-    // Start by filling the visible top zone only (above the black square) —
-    // not the whole page, since the bottom half is mostly hidden anyway.
-    // The client can still drag/resize freely afterwards.
-    state.cz.photoX = 0; state.cz.photoY = 0; state.cz.photoW = 100; state.cz.photoH = CZ_TOP_ZONE_H;
+    // Fill the whole page by default — client can crop/reposition afterwards.
+    state.cz.photoX = 0; state.cz.photoY = 0; state.cz.photoW = 100; state.cz.photoH = 100;
     state.cz.photoSelected = true; // show handles right away so the client knows they can resize
     render();
   };
@@ -1083,6 +1063,7 @@ function renderAdmin() {
 
       return `
       <div class="order-card">
+        <button class="order-delete-icon" onclick="deleteOrder('${o.id}')" title="Supprimer cette commande">🗑️</button>
         <div class="order-card-top">
           <div style="display:flex; align-items:center; gap:10px;">
             <label class="order-select" onclick="event.stopPropagation()">
@@ -1107,14 +1088,15 @@ function renderAdmin() {
         <div class="order-items">${itemsHtml}</div>
         <div style="font-weight:bold; margin-top:6px;">Total : ${money(o.total)}</div>
 
-        <div class="mailto-actions">
-          <button class="btn secondary small" onclick="openOrderModal('${o.id}')">🖼️ Voir l'aperçu</button>
+        <div class="order-actions-primary">
+          <button class="btn small" onclick="openOrderModal('${o.id}')">🖼️ Voir l'aperçu</button>
           <select class="status-select" onchange="changeOrderStatus('${o.id}', this.value)">
             ${Object.entries(STATUS_LABELS).map(([k, v]) => `<option value="${k}" ${o.status === k ? "selected" : ""}>${v}</option>`).join("")}
           </select>
-          <a class="btn secondary small" href="mailto:${esc(o.customer.email)}?subject=${encodeURIComponent("Votre commande BLESSLEV #" + o.id)}&body=${clientMailBody}">✉️ Écrire au client</a>
-          <a class="btn secondary small" href="mailto:?subject=${encodeURIComponent("Bon de commande #" + o.id)}&body=${mailBody}">📋 Bon de commande (email)</a>
-          <button class="btn secondary small danger" onclick="deleteOrder('${o.id}')">🗑️ Supprimer</button>
+        </div>
+        <div class="order-actions-secondary">
+          <a href="mailto:${esc(o.customer.email)}?subject=${encodeURIComponent("Votre commande BLESSLEV #" + o.id)}&body=${clientMailBody}">✉️ Écrire au client</a>
+          <a href="mailto:?subject=${encodeURIComponent("Bon de commande #" + o.id)}&body=${mailBody}">📋 Bon de commande (email)</a>
         </div>
       </div>`;
     })

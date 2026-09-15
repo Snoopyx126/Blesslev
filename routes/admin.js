@@ -72,4 +72,18 @@ router.patch("/orders/:id/status", requireAdmin, async (req, res) => {
   }
 });
 
+router.delete("/orders/:id", requireAdmin, async (req, res) => {
+  try {
+    const db = await getDB();
+    const result = await db.collection("orders").deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: "Commande introuvable." });
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Erreur suppression de la commande." });
+  }
+});
+
 module.exports = router;
