@@ -288,7 +288,7 @@ function renderCustomize(id) {
               </label>
               <div class="hint">Glissez la photo pour la déplacer. Tirez sur un des 4 coins pour changer sa taille. Tirez sur le milieu d'un bord pour rogner la photo sur la largeur ou la hauteur.</div>
               <button class="btn secondary small" style="margin-top:10px;" onclick="removeCzPhoto()">Retirer la photo</button>
-            ` : `<div class="hint">Format conseillé : bonne résolution. Elle couvre toute la page par défaut — vous pourrez ensuite la recadrer comme vous voulez.</div>`}
+            ` : `<div class="hint">Format conseillé : bonne résolution. Elle s'affiche entière par défaut, sans rognage — vous pourrez ensuite l'agrandir ou la recadrer comme vous voulez.</div>`}
           </div>
 
           ${showBgColorPicker ? `
@@ -481,16 +481,51 @@ function removeCzPhoto() {
   state.cz.photoX = 0; state.cz.photoY = 0; state.cz.photoW = 100; state.cz.photoH = 100;
   render();
 }
+// The customizer preview always keeps this pixel aspect ratio (matches the
+// printed calendar page — see .cz-preview in style.css).
+const CZ_PAGE_W = 1282;
+const CZ_PAGE_H = 1820;
+
 function onCzPhotoChange(evt) {
   const file = evt.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    state.cz.photo = e.target.result;
-    // Fill the whole page by default — client can crop/reposition afterwards.
-    state.cz.photoX = 0; state.cz.photoY = 0; state.cz.photoW = 100; state.cz.photoH = 100;
-    state.cz.photoSelected = true; // show handles right away so the client knows they can resize
-    render();
+    const dataUrl = e.target.result;
+    const img = new Image();
+    img.onload = () => {
+      const photoR = img.naturalWidth / img.naturalHeight;
+      const pageR = CZ_PAGE_W / CZ_PAGE_H;
+      let boxWPx, boxHPx;
+      if (photoR > pageR) {
+        // Photo relatively wider than the page — width is the limit.
+        boxWPx = CZ_PAGE_W;
+        boxHPx = CZ_PAGE_W / photoR;
+      } else {
+        // Photo relatively taller than the page — height is the limit.
+        boxHPx = CZ_PAGE_H;
+        boxWPx = CZ_PAGE_H * photoR;
+      }
+      state.cz.photo = dataUrl;
+      // Show the whole photo by default (no cropping), centered — the
+      // client can then resize/crop manually if they want to fill more.
+      state.cz.photoW = (boxWPx / CZ_PAGE_W) * 100;
+      state.cz.photoH = (boxHPx / CZ_PAGE_H) * 100;
+      state.cz.photoX = (100 - state.cz.photoW) / 2;
+      state.cz.photoY = (100 - state.cz.photoH) / 2;
+      state.cz.photoObjX = 50;
+      state.cz.photoObjY = 50;
+      state.cz.photoSelected = true; // show handles right away so the client knows they can resize
+      render();
+    };
+    img.onerror = () => {
+      // Fallback if we somehow can't read the image dimensions: fill the page as before.
+      state.cz.photo = dataUrl;
+      state.cz.photoX = 0; state.cz.photoY = 0; state.cz.photoW = 100; state.cz.photoH = 100;
+      state.cz.photoSelected = true;
+      render();
+    };
+    img.src = dataUrl;
   };
   reader.readAsDataURL(file);
 }

@@ -713,4 +713,6 @@ img { max-width: 100%; display: block; }
   .order-card { padding: 16px 46px 16px 16px; }
   .order-delete-icon { top: 12px; right: 12px; width: 28px; height: 28px; font-size: 12px; }
   .order-actions-primary, .order-actions-secondary { gap: 10px; }
+  .cz-preview { max-width: 200px; }
+  .cz-preview-outer { top: 8px; }
 }
