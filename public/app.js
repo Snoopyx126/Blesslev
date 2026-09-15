@@ -20,6 +20,7 @@ function setCountry(c) {
 // end just tracks whether we currently have a valid session.
 let adminUnlocked = false;
 let adminLoginError = "";
+let postAddNotif = null; // {productId} — shown right after adding a customized calendar to the cart
 
 const root = document.getElementById("app");
 
@@ -68,6 +69,19 @@ async function updateOrderStatus(id, status) {
     });
   } catch (e) {
     console.error(e);
+  }
+}
+
+async function deleteOrderApi(id) {
+  try {
+    const res = await fetch(`/api/admin/orders/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    return res.ok;
+  } catch (e) {
+    console.error(e);
+    return false;
   }
 }
 
@@ -734,12 +748,37 @@ function addCustomCalendarToCart() {
       frame: state.cz.frame,
     },
   });
-  toast("Calendrier personnalisé ajouté au panier ✓");
+  const productId = p.id;
   state.cz = null;
-  navigate({ name: "cart" });
+  postAddNotif = { productId };
+  render();
 }
 
 // ---------------- Cart ----------------
+function renderPostAddNotif() {
+  return `
+    <div class="post-add-overlay">
+      <div class="post-add-card">
+        <div class="post-add-check">✓</div>
+        <h3 class="serif">Calendrier ajouté au panier</h3>
+        <p class="hint" style="margin-bottom:20px;">Votre calendrier personnalisé a bien été ajouté.</p>
+        <div class="post-add-actions">
+          <button class="btn secondary" onclick="postAddContinueShopping()">Continuer vos achats</button>
+          <button class="btn" onclick="postAddGoToCart()">Aller au panier</button>
+        </div>
+      </div>
+    </div>`;
+}
+function postAddContinueShopping() {
+  const productId = postAddNotif ? postAddNotif.productId : null;
+  postAddNotif = null;
+  navigate({ name: "customize", id: productId || "calendrier-5787" });
+}
+function postAddGoToCart() {
+  postAddNotif = null;
+  navigate({ name: "cart" });
+}
+
 function renderCart() {
   if (state.cart.length === 0) {
     return `
@@ -1019,6 +1058,7 @@ function renderAdmin() {
           </select>
           <a class="btn secondary small" href="mailto:${esc(o.customer.email)}?subject=${encodeURIComponent("Votre commande BLESSLEV #" + o.id)}&body=${clientMailBody}">✉️ Écrire au client</a>
           <a class="btn secondary small" href="mailto:?subject=${encodeURIComponent("Bon de commande #" + o.id)}&body=${mailBody}">📋 Bon de commande (email)</a>
+          <button class="btn secondary small danger" onclick="deleteOrder('${o.id}')">🗑️ Supprimer</button>
         </div>
       </div>`;
     })
@@ -1064,6 +1104,7 @@ function renderAdmin() {
         ${selectedCount > 0 ? `
           <span class="hint" style="margin:0;">${selectedCount} commande${selectedCount > 1 ? "s" : ""} sélectionnée${selectedCount > 1 ? "s" : ""}</span>
           <button class="btn small" onclick="downloadSelectedOrders()">⬇️ Télécharger la sélection</button>
+          <button class="btn small danger" onclick="deleteSelectedOrders()">🗑️ Supprimer la sélection</button>
         ` : ""}
       </div>` : ""}
 
@@ -1201,6 +1242,33 @@ async function changeOrderStatus(id, status) {
   if (o) o.status = status;
   render();
   toast("Statut mis à jour ✓");
+}
+
+async function deleteOrder(id) {
+  if (!confirm(`Supprimer définitivement la commande #${id} ? Cette action est irréversible.`)) return;
+  const ok = await deleteOrderApi(id);
+  if (ok) {
+    adminOrders = adminOrders.filter((o) => o.id !== id);
+    adminSelected.delete(id);
+    if (adminModalOrderId === id) adminModalOrderId = null;
+    render();
+    toast("Commande supprimée ✓");
+  } else {
+    toast("Erreur lors de la suppression.");
+  }
+}
+
+async function deleteSelectedOrders() {
+  const count = adminSelected.size;
+  if (count === 0) return;
+  if (!confirm(`Supprimer définitivement ${count} commande${count > 1 ? "s" : ""} ? Cette action est irréversible.`)) return;
+  const ids = Array.from(adminSelected);
+  const results = await Promise.all(ids.map((id) => deleteOrderApi(id)));
+  const deletedIds = ids.filter((id, i) => results[i]);
+  adminOrders = adminOrders.filter((o) => !deletedIds.includes(o.id));
+  deletedIds.forEach((id) => adminSelected.delete(id));
+  render();
+  toast(`${deletedIds.length} commande${deletedIds.length > 1 ? "s" : ""} supprimée${deletedIds.length > 1 ? "s" : ""} ✓`);
 }
 
 function toggleOrderSelect(id, checked) {
@@ -1366,7 +1434,7 @@ function render() {
     }
   } else body = renderHome();
 
-  root.innerHTML = renderHeader() + body + renderFooter();
+  root.innerHTML = renderHeader() + body + renderFooter() + (postAddNotif ? renderPostAddNotif() : "");
 }
 
 // intercept product "customize" entry point (button in product page calls navigate directly with name 'customize',
