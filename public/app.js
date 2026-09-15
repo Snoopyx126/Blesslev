@@ -246,6 +246,7 @@ function freshCzState(productId) {
     editMode: true, // true = show warning tint on the locked zone; false = true final preview
     draggingPhoto: false, dragStartPhoto: null,
     photoSelected: false, // true while the photo box is actively selected — shows its outline/handles
+    photoObjX: 50, photoObjY: 50, // object-position (%) — which part of the photo stays anchored when cropping
     draggingText: false, dragStartText: null,
     resizingCorner: null, resizeStart: null,
     resizingPhotoSide: null, photoSideResizeStart: null,
@@ -345,7 +346,7 @@ function renderCustomize(id) {
               <div class="cz-photo-box ${cz.photoSelected ? "selected" : ""}" id="czPhotoBox"
                    style="left:${cz.photoX}%; top:${cz.photoY}%; width:${cz.photoW}%; height:${cz.photoH}%;"
                    onmousedown="czPhotoDragStart(event)" ontouchstart="czPhotoDragStart(event)">
-                <img id="czPhotoImg" src="${cz.photo}" draggable="false"/>
+                <img id="czPhotoImg" src="${cz.photo}" draggable="false" style="object-position:${cz.photoObjX}% ${cz.photoObjY}%;"/>
                 ${cz.photoSelected ? corners.map(c => `<div class="cz-corner-handle corner-${c}" data-corner="${c}"
                      onmousedown="czCornerDragStart(event,'${c}')" ontouchstart="czCornerDragStart(event,'${c}')"></div>`).join("") : ""}
                 ${cz.photoSelected ? sides.map(s => `<div class="cz-side-handle side-${s}" data-side="${s}"
@@ -531,6 +532,16 @@ function czPhotoDragStart(evt) {
 }
 
 // ---- Resizing: drag any of the 4 corners to set width & height independently ----
+// Sets which part of the photo stays anchored (visually fixed) while
+// cropping — e.g. cropping from the bottom should only cut the bottom,
+// not re-center and nibble the top too.
+function setCzPhotoAnchor(x, y) {
+  state.cz.photoObjX = x;
+  state.cz.photoObjY = y;
+  const img = document.getElementById("czPhotoImg");
+  if (img) img.style.objectPosition = `${x}% ${y}%`;
+}
+
 function czCornerDragStart(evt, corner) {
   evt.stopPropagation();
   evt.preventDefault();
@@ -547,6 +558,11 @@ function czCornerDragStart(evt, corner) {
     wPx: (state.cz.photoW / 100) * rect.width,
     hPx: (state.cz.photoH / 100) * rect.height,
   };
+  // Anchor the photo to the corner that stays fixed (opposite of the one
+  // being dragged) so the crop only eats into the side being pulled in.
+  const anchorX = corner.includes("w") ? 100 : 0;
+  const anchorY = corner.includes("n") ? 100 : 0;
+  setCzPhotoAnchor(anchorX, anchorY);
 }
 function czCornerDragMove(evt) {
   const corner = state.cz.resizingCorner;
@@ -610,6 +626,12 @@ function czPhotoSideDragStart(evt, side) {
     wPx: (state.cz.photoW / 100) * rect.width,
     hPx: (state.cz.photoH / 100) * rect.height,
   };
+  // Anchor to the edge that stays fixed, so cropping only eats into the
+  // side being dragged (the other axis keeps whatever anchor it already had).
+  if (side === "n") setCzPhotoAnchor(state.cz.photoObjX, 100);
+  else if (side === "s") setCzPhotoAnchor(state.cz.photoObjX, 0);
+  else if (side === "e") setCzPhotoAnchor(0, state.cz.photoObjY);
+  else if (side === "w") setCzPhotoAnchor(100, state.cz.photoObjY);
 }
 function czPhotoSideDragMove(evt) {
   const side = state.cz.resizingPhotoSide;
@@ -773,6 +795,7 @@ function addCustomCalendarToCart() {
       photo: state.cz.photo,
       photoX: state.cz.photoX, photoY: state.cz.photoY,
       photoW: state.cz.photoW, photoH: state.cz.photoH,
+      photoObjX: state.cz.photoObjX, photoObjY: state.cz.photoObjY,
       bgColor: state.cz.bgColor,
       text: state.cz.text,
       textColor: state.cz.textColor,
@@ -1348,7 +1371,7 @@ function buildCalendarVisualNode(customization) {
   let html = "";
   if (c.photo) {
     html += `<div class="cz-photo-box" style="left:${c.photoX}%; top:${c.photoY}%; width:${c.photoW}%; height:${c.photoH}%;">
-      <img src="${c.photo}"/>
+      <img src="${c.photo}" style="object-position:${c.photoObjX != null ? c.photoObjX : 50}% ${c.photoObjY != null ? c.photoObjY : 50}%;"/>
     </div>`;
   }
   html += `<div class="cz-frame-layer">${c.frame && c.frame !== "none" ? frameSVG(c.frame) : ""}</div>`;
